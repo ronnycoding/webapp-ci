@@ -1,4 +1,5 @@
 version: 2
+
 references:
   container_config: &container_config
     working_directory: ~/tmp
@@ -7,14 +8,15 @@ references:
   add_workspace: &add_workspace
     attach_workspace:
       at: .
-  aws_deploy: &aws_deploy
+  app_deploy: &app_deploy
     steps:
       - *add_workspace
       - deploy:
           name: Deploy app to aws
           command: |
-            echo 'deploy to aws'
+            # yarn expo login -u $EXPO_USERNAME -p $EXPO_PASSWORD
             yarn deploy
+
 jobs:
   checkout:
     <<: *container_config
@@ -62,18 +64,18 @@ jobs:
     <<: *container_config
     environment:
       RELEASE_CHANNEL: pull-request
-    <<: *expo_deploy
+    <<: *app_deploy
   deploy-react-app-staging:
     <<: *container_config
     environment:
       RELEASE_CHANNEL: staging
-    <<: *expo_deploy
+    <<: *app_deploy
   deploy-react-app-production:
     <<: *container_config
     environment:
       RELEASE_CHANNEL: default
-    <<: *expo_deploy
-  
+    <<: *app_deploy
+
 workflows:
   version: 2
   deploy:
@@ -105,16 +107,16 @@ workflows:
           filters:
             branches:
               only: master
-    - approve-deploy:
-        type: approval
-        requires:
-          - deploy-react-app-staging
-        filters:
-          branches:
-            only: master
-    - deploy-react-app-production:
-        requires:
-          - approve-deploy
-        filters:
-          branches:
-            only: master
+      - approve-deploy:
+          type: approval
+          requires:
+            - deploy-react-app-staging
+          filters:
+            branches:
+              only: master
+      - deploy-react-app-production:
+          requires:
+            - approve-deploy
+          filters:
+            branches:
+              only: master
