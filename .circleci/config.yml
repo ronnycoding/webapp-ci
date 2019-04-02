@@ -1,9 +1,23 @@
 version: 2
-jobs:
-  build:
+references:
+  container_config: &container_config
     working_directory: ~/tmp
     docker:
       - image: circleci/node:8.15.1
+  add_workspace: &add_workspace
+    attach_workspace:
+      at: .
+  aws_deploy: &aws_deploy
+    steps:
+      - *add_workspace
+      - deploy:
+          name: Deploy app to aws
+          command: |
+            echo 'deploy to aws'
+            yarn deploy
+jobs:
+  checkout:
+    <<: *container_config
     steps:
       - checkout
       - restore_cache:
@@ -24,7 +38,83 @@ jobs:
           root: .
           paths:
             - .
+  lint:
+    <<: *container_config
+    steps:
+      - *add_workspace
       - run:
-          name: Test application
+          name: Run eslint
+          command: yarn lint
+      - run:
+          name: Run stylelint
+          command: yarn stylelint
+      - run:
+          name: Run flow type check
+          command: yarn flow
+  test:
+    <<: *container_config
+    steps:
+      - *add_workspace
+      - run:
+          name: Run tests
           command: yarn test
-    
+  deploy-react-app-pull-request:
+    <<: *container_config
+    environment:
+      RELEASE_CHANNEL: pull-request
+    <<: *expo_deploy
+  deploy-react-app-staging:
+    <<: *container_config
+    environment:
+      RELEASE_CHANNEL: staging
+    <<: *expo_deploy
+  deploy-react-app-production:
+    <<: *container_config
+    environment:
+      RELEASE_CHANNEL: default
+    <<: *expo_deploy
+  
+workflows:
+  version: 2
+  deploy:
+    jobs:
+      - checkout
+      - lint:
+          requires:
+            - checkout
+      - test:
+          requires:
+            - checkout
+      - approve-deploy-pull-request:
+          type: approval
+          filters:
+            branches:
+              ignore: master
+      - deploy-react-app-pull-request:
+          requires:
+            - lint
+            - test
+            - approve-deploy-pull-request
+          filters:
+            branches:
+              ignore: master
+      - deploy-react-app-staging:
+          requires:
+            - lint
+            - test
+          filters:
+            branches:
+              only: master
+    - approve-deploy:
+        type: approval
+        requires:
+          - deploy-react-app-staging
+        filters:
+          branches:
+            only: master
+    - deploy-react-app-production:
+        requires:
+          - approve-deploy
+        filters:
+          branches:
+            only: master
