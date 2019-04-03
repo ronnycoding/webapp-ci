@@ -12,10 +12,10 @@ references:
     steps:
       - *add_workspace
       - deploy:
-          name: Deploy app to aws
+          name: Deploy app
           command: |
             # yarn expo login -u $EXPO_USERNAME -p $EXPO_PASSWORD
-            yarn deploy
+            echo "enviroment $RELEASE_CHANNEL"
 
 jobs:
   checkout:
@@ -23,17 +23,18 @@ jobs:
     steps:
       - checkout
       - restore_cache:
+          name: Restore Yarn Package Cache
           keys:
-            - core-dependencies-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+            - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
           name: Check yarn version
           command: yarn --version
       - run:
-          name: Install dependencies
-          command: yarn install
+          name: Install Dependencies
+          command: yarn install --frozen-lockfile
       - save_cache:
-          name: Cache Yarn Dependencies
-          key: core-dependencies-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+          name: Save Yarn Package Cache
+          key: yarn-packages-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
       - persist_to_workspace:

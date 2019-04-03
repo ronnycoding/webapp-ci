@@ -1,0 +1,38 @@
+[build]
+  base = "."
+  publish = "./build"
+  command = "yarn build"
+
+[build.environment]
+  YARN_VERSION = "1.12.3"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Production context: All deploys to the main
+# repository branch will inherit these settings.
+[context.production]
+  command = "echo \"Production context\";"
+  [context.production.environment]
+    ACCESS_TOKEN = "super secret"
+
+# Deploy Preview context: All Deploy Previews
+# will inherit these settings.
+[context.deploy-preview.environment]
+  ACCESS_TOKEN = "super secret"
+
+# Branch deploy context: All deploys that are not in
+# an active Deploy Preview will inherit these settings.
+[context.branch-deploy]
+  command = "echo \"Branch deploy context\";"
+
+# Specific branch context: Deploys from this branch
+# will take these settings and override their
+# current ones.
+#[context.feature]
+#  command = "make feature"
+
+#[context."features/branch"]
+#  command = "gulp"
