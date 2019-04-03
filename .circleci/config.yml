@@ -14,7 +14,6 @@ references:
       - deploy:
           name: Deploy app
           command: |
-            # yarn expo login -u $EXPO_USERNAME -p $EXPO_PASSWORD
             echo "enviroment $RELEASE_CHANNEL"
 
 jobs:

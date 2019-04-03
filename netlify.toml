@@ -1,7 +1,7 @@
 [build]
   base = "."
-  publish = "./build"
   command = "yarn build"
+  publish = "build/"
 
 [build.environment]
   YARN_VERSION = "1.12.3"
